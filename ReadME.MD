@@ -1,5 +1,4 @@
-
-## Self-Balancing Robot Simulation
+![Self-Balancing Cart Example](cart.png)
 
 This repository contains implementations of three reinforcement learning algorithms for balancing a robot in the PyBullet simulation environment. The available algorithms are:
 - Q-Learning (`main_q.py`)
