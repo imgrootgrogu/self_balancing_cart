@@ -128,18 +128,16 @@ def train():
     if len(replay_buffer) < batch_size:
         return
 
-    # Sample from replay buffer
+
     minibatch = random.sample(replay_buffer, batch_size)
     states, actions, rewards, next_states, dones = zip(*minibatch)
 
-    # Ensure proper reshaping
+   
     states = np.array(states).reshape(-1, state_size)
     actions = np.array(actions).reshape(-1, action_size)
     rewards = np.array(rewards).reshape(-1, 1)
     next_states = np.array(next_states).reshape(-1, state_size)
     dones = np.array(dones).reshape(-1, 1)
-
-    # Convert to tensors
     states = tf.convert_to_tensor(states, dtype=tf.float32)
     actions = tf.convert_to_tensor(actions, dtype=tf.float32)
     rewards = tf.convert_to_tensor(rewards, dtype=tf.float32)
@@ -164,12 +162,12 @@ def train():
     actor_grads = tape.gradient(actor_loss, actor.trainable_variables)
     actor_optimizer.apply_gradients(zip(actor_grads, actor.trainable_variables))
     actor_losses.append(actor_loss.numpy())
-    # Update target networks
+
     soft_update(target_actor, actor, tau)
     soft_update(target_critic, critic, tau)
 
 
-# Add metrics tracking
+
 episode_lengths = []
 stability_scores = []
 stability_threshold = 0.05
@@ -185,7 +183,7 @@ try:
         steps_in_stable_range = 0
         actor_losses_per_step = []
 
-        # Initial state
+     
         state = np.reshape([p.getEulerFromQuaternion(p.getBasePositionAndOrientation(robot_id)[1])[1],
                             p.getBaseVelocity(robot_id)[1][1]], [1, state_size])
 
@@ -220,7 +218,7 @@ try:
             if done:
                 break
 
-        # Log episode metrics
+      
         episode_rewards.append(total_reward)
         episode_lengths.append(steps)
         stability_scores.append((steps_in_stable_range / steps))
@@ -236,7 +234,7 @@ try:
  
     fig, axes = plt.subplots(2, 2, figsize=(18, 10)) 
 
-    # Plot Actor Loss
+
     axes[0, 0].plot(actor_losses_per_episode, label="Actor Loss", color="green")
     axes[0, 0].set_xlabel("Episode")
     axes[0, 0].set_ylabel("Loss")
@@ -244,7 +242,7 @@ try:
     axes[0, 0].legend()
     axes[0, 0].grid(True)
 
-    # Plot Episode Rewards
+  
     axes[0, 1].plot(episode_rewards, label="Episode Rewards", color="blue")
     axes[0, 1].set_xlabel("Episode")
     axes[0, 1].set_ylabel("Total Reward")
@@ -252,7 +250,7 @@ try:
     axes[0, 1].legend()
     axes[0, 1].grid(True)
 
-    # Plot Episode Lengths
+
     axes[1, 0].plot(episode_lengths, label="Episode Length", color="orange")
     axes[1, 0].set_xlabel("Episode")
     axes[1, 0].set_ylabel("Steps")
@@ -260,7 +258,7 @@ try:
     axes[1, 0].legend()
     axes[1, 0].grid(True)
 
-    # Plot Stability Scores
+
     axes[1, 1].plot(stability_scores, label="Stability Score", color="green")
     axes[1, 1].set_xlabel("Episode")
     axes[1, 1].set_ylabel("Stability Score")

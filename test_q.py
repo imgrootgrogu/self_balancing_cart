@@ -4,12 +4,13 @@ import pybullet_data
 import numpy as np
 import time
 import matplotlib.pyplot as plt
+import os
+
+root_path = os.path.dirname(__file__)
+urdf_path = os.path.join(root_path, "urdf", "robot4.urdf")
 
 q_table = np.load("q_table.npy")
 print("Q-table loaded successfully.")
-
-urdf_path = r"C:\Users\lilil\OneDrive\Documents\school\MSML642 Robotics\self_balancing_robot\urdf\robot4.urdf"
-
 
 p.connect(p.GUI)
 p.setAdditionalSearchPath(pybullet_data.getDataPath())

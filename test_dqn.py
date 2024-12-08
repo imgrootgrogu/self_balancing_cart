@@ -5,15 +5,16 @@ import numpy as np
 import tensorflow as tf
 import time
 from tensorflow.keras.losses import MeanSquaredError
+import os
 
+root_path = os.path.dirname(__file__)
+urdf_path = os.path.join(root_path, "urdf", "robot4.urdf")
 
 p.connect(p.GUI)
 p.setAdditionalSearchPath(pybullet_data.getDataPath())
 plane_id = p.loadURDF("plane.urdf")
 p.setGravity(0, 0, -9.8)
 
-
-urdf_path = r"C:\Users\lilil\OneDrive\Documents\school\MSML642 Robotics\self_balancing_robot\urdf\robot4.urdf"
 robot_id = p.loadURDF(urdf_path, basePosition=[0, 0, 0.1])
 
 

@@ -3,13 +3,14 @@ import pybullet_data
 import numpy as np
 import tensorflow as tf
 import time
+import os
 
+root_path = os.path.dirname(__file__)
+urdf_path = os.path.join(root_path, "urdf", "robot4.urdf")
 
 actor = tf.keras.models.load_model("actor_model_DDPG.h5")
 print("Actor model loaded successfully!")
 
-
-urdf_path = r"C:\Users\lilil\OneDrive\Documents\school\MSML642 Robotics\self_balancing_robot\urdf\robot4.urdf"
 p.connect(p.GUI)
 p.setAdditionalSearchPath(pybullet_data.getDataPath())
 plane_id = p.loadURDF("plane.urdf")
