@@ -6,9 +6,10 @@ from collections import deque
 import random
 import matplotlib.pyplot as plt
 import time
+import os
 
-
-urdf_path = r"C:\Users\jawer\OneDrive\Desktop\642\self_balancing_robot\urdf\robot.urdf"  
+root_path = os.path.dirname(__file__)
+urdf_path = os.path.join(root_path, "urdf", "robot4.urdf")
 
 p.connect(p.GUI)
 p.setAdditionalSearchPath(pybullet_data.getDataPath())
@@ -62,7 +63,6 @@ def build_critic(state_size, action_size):
     return model
 
 
-# Parameters
 state_size = 2 
 action_size = 1  
 action_limit = 2.0  
@@ -73,7 +73,7 @@ critic_lr = 0.002
 batch_size = 64
 memory_size = 20000
 
-# Initialize actor and critic networks
+
 actor = build_actor(state_size, action_size, action_limit)
 target_actor = build_actor(state_size, action_size, action_limit)
 target_actor.set_weights(actor.get_weights())
