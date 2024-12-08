@@ -23,6 +23,7 @@ left_wheel_joint = 2
 p.setJointMotorControl2(robot_id, right_wheel_joint, controlMode=p.VELOCITY_CONTROL, force=0)
 p.setJointMotorControl2(robot_id, left_wheel_joint, controlMode=p.VELOCITY_CONTROL, force=0)
 
+# Reset robot to its initial state
 def reset_robot():
     p.resetBasePositionAndOrientation(robot_id, [0, 0, 0.1], [0, 0, 0, 1])
     p.resetBaseVelocity(robot_id, [0, 0, 0], [0, 0, 0])
@@ -72,6 +73,7 @@ critic_lr = 0.002
 batch_size = 64
 memory_size = 20000
 
+
 actor = build_actor(state_size, action_size, action_limit)
 target_actor = build_actor(state_size, action_size, action_limit)
 target_actor.set_weights(actor.get_weights())
@@ -113,10 +115,10 @@ class OUActionNoise:
         self.x_prev = x
         return x
 
-
+# Initialize noise process
 noise = OUActionNoise(mean=np.zeros(action_size), std_dev=0.2 * np.ones(action_size))
 
-
+# Store experience in the replay buffer
 def store_experience(state, action, reward, next_state, done):
     replay_buffer.append((state, action, reward, next_state, done))
 critic_losses = []
@@ -126,18 +128,16 @@ def train():
     if len(replay_buffer) < batch_size:
         return
 
-    # Sample from replay buffer
+
     minibatch = random.sample(replay_buffer, batch_size)
     states, actions, rewards, next_states, dones = zip(*minibatch)
 
-    
+   
     states = np.array(states).reshape(-1, state_size)
     actions = np.array(actions).reshape(-1, action_size)
     rewards = np.array(rewards).reshape(-1, 1)
     next_states = np.array(next_states).reshape(-1, state_size)
     dones = np.array(dones).reshape(-1, 1)
-
-   
     states = tf.convert_to_tensor(states, dtype=tf.float32)
     actions = tf.convert_to_tensor(actions, dtype=tf.float32)
     rewards = tf.convert_to_tensor(rewards, dtype=tf.float32)
@@ -162,7 +162,7 @@ def train():
     actor_grads = tape.gradient(actor_loss, actor.trainable_variables)
     actor_optimizer.apply_gradients(zip(actor_grads, actor.trainable_variables))
     actor_losses.append(actor_loss.numpy())
-    # Update target networks
+
     soft_update(target_actor, actor, tau)
     soft_update(target_critic, critic, tau)
 
@@ -170,7 +170,8 @@ def train():
 
 episode_lengths = []
 stability_scores = []
-
+stability_threshold = 0.05
+actor_losses_per_episode = []
 try:
     episode_rewards = []
     for episode in range(500):
@@ -179,6 +180,8 @@ try:
         total_reward = 0
         steps = 0
         pitch_deviation = []
+        steps_in_stable_range = 0
+        actor_losses_per_step = []
 
      
         state = np.reshape([p.getEulerFromQuaternion(p.getBasePositionAndOrientation(robot_id)[1])[1],
@@ -200,22 +203,27 @@ try:
                                      p.getBaseVelocity(robot_id)[1][1]], [1, state_size])
             reward = calculate_reward(next_state[0][0], next_state[0][1])
             total_reward += reward
-            pitch_deviation.append(abs(next_state[0][0]))  # Track pitch deviation
+
+            if abs(next_state[0][0]) < stability_threshold:
+                steps_in_stable_range += 1 
+
             steps += 1
 
             # Store experience and train
             done = abs(next_state[0][0]) > 0.5
             store_experience(state, action, reward, next_state, done)
             train()
-
+            actor_losses_per_step.append(actor_losses)
             state = next_state
             if done:
                 break
 
-    
+      
         episode_rewards.append(total_reward)
         episode_lengths.append(steps)
-        stability_scores.append(np.mean(pitch_deviation))  # Mean absolute pitch deviation
+        stability_scores.append((steps_in_stable_range / steps))
+        average_actor_loss = np.mean(actor_losses_per_step[-steps:])  
+        actor_losses_per_episode.append(average_actor_loss)
 
         print(f"Episode {episode + 1}: Total Reward = {total_reward:.2f}, "
               f"Steps = {steps}, Stability Score = {stability_scores[-1]:.4f}")
@@ -223,33 +231,43 @@ try:
     actor.save("actor_model_DDPG.h5")
     critic.save("critic_model.h5")
 
+ 
+    fig, axes = plt.subplots(2, 2, figsize=(18, 10)) 
 
-    plt.figure(figsize=(18, 6))
 
-    plt.subplot(1, 3, 1)
-    plt.plot(episode_rewards, label="Episode Rewards", color="blue")
-    plt.xlabel("Episode")
-    plt.ylabel("Total Reward")
-    plt.title("Cumulative Rewards Over Episodes")
-    plt.legend()
-    plt.grid(True)
+    axes[0, 0].plot(actor_losses_per_episode, label="Actor Loss", color="green")
+    axes[0, 0].set_xlabel("Episode")
+    axes[0, 0].set_ylabel("Loss")
+    axes[0, 0].set_title("Mean Actor Loss Over Episodes")
+    axes[0, 0].legend()
+    axes[0, 0].grid(True)
 
-    plt.subplot(1, 3, 2)
-    plt.plot(episode_lengths, label="Episode Length", color="orange")
-    plt.xlabel("Episode")
-    plt.ylabel("Steps")
-    plt.title("Episode Length Over Episodes")
-    plt.legend()
-    plt.grid(True)
+  
+    axes[0, 1].plot(episode_rewards, label="Episode Rewards", color="blue")
+    axes[0, 1].set_xlabel("Episode")
+    axes[0, 1].set_ylabel("Total Reward")
+    axes[0, 1].set_title("Cumulative Rewards Over Episodes")
+    axes[0, 1].legend()
+    axes[0, 1].grid(True)
 
-    plt.subplot(1, 3, 3)
-    plt.plot(stability_scores, label="Stability Score", color="green")
-    plt.xlabel("Episode")
-    plt.ylabel("Mean Pitch Deviation")
-    plt.title("Stability Score Over Episodes")
-    plt.legend()
-    plt.grid(True)
 
+    axes[1, 0].plot(episode_lengths, label="Episode Length", color="orange")
+    axes[1, 0].set_xlabel("Episode")
+    axes[1, 0].set_ylabel("Steps")
+    axes[1, 0].set_title("Episode Length Over Episodes")
+    axes[1, 0].legend()
+    axes[1, 0].grid(True)
+
+
+    axes[1, 1].plot(stability_scores, label="Stability Score", color="green")
+    axes[1, 1].set_xlabel("Episode")
+    axes[1, 1].set_ylabel("Stability Score")
+    axes[1, 1].set_title("Stability Score Over Episodes")
+    axes[1, 1].legend()
+    axes[1, 1].grid(True)
+
+
+    # Adjust layout for better spacing
     plt.tight_layout()
     plt.show()
 
