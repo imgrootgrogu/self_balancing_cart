@@ -6,9 +6,10 @@ from collections import deque
 import random
 import matplotlib.pyplot as plt
 import time
+import os
 
-
-urdf_path = r"C:\Users\lilil\OneDrive\Documents\school\MSML642 Robotics\self_balancing_robot\urdf\robot4.urdf"
+root_path = os.path.dirname(__file__)
+urdf_path = os.path.join(root_path, "urdf", "robot4.urdf")
 
 p.connect(p.GUI)
 p.setAdditionalSearchPath(pybullet_data.getDataPath())
