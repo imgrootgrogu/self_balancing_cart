@@ -90,8 +90,8 @@ try:
     episode_rewards = []
     episode_losses = []
     stability_scores = []
-
-    for episode in range(500):
+    episode_lengths = []
+    for episode in range(1000):
         reset_robot()
         total_reward = 0
         total_loss = 0
@@ -165,6 +165,7 @@ try:
             target_net.set_weights(policy_net.get_weights())
 
         epsilon = max(epsilon_min, epsilon * epsilon_decay)
+        episode_lengths.append(total_steps)
         episode_rewards.append(total_reward)
         print(f"Episode {episode + 1}: Total Reward = {total_reward:.2f}, Avg Loss = {avg_loss:.4f}, Stability Score = {stability_score:.4f}, Epsilon = {epsilon:.4f}")
 
@@ -173,7 +174,7 @@ try:
 
 
     plt.figure(figsize=(12, 10))
-    plt.subplot(3, 1, 1)
+    plt.subplot(4, 1, 1)
     plt.plot(episode_rewards, label="Total Reward")
     plt.xlabel("Episode")
     plt.ylabel("Total Reward")
@@ -181,7 +182,7 @@ try:
     plt.legend()
     plt.grid()
 
-    plt.subplot(3, 1, 2)
+    plt.subplot(4, 1, 2)
     plt.plot(episode_losses, label="Average Loss", color="red")
     plt.xlabel("Episode")
     plt.ylabel("Loss")
@@ -189,11 +190,19 @@ try:
     plt.legend()
     plt.grid()
 
-    plt.subplot(3, 1, 3)
+    plt.subplot(4, 1, 3)
     plt.plot(stability_scores, label="Stability Score", color="green")
     plt.xlabel("Episode")
     plt.ylabel("Stability Score")
     plt.title("Stability Score per Episode")
+    plt.legend()
+    plt.grid()
+
+    plt.subplot(4, 1, 4)
+    plt.plot(episode_lengths, label="Episode Length", color="orange")
+    plt.xlabel("Episode")
+    plt.ylabel("Episode Length (Steps)")
+    plt.title("Episode Length per Episode")
     plt.legend()
     plt.grid()
 

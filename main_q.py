@@ -50,7 +50,7 @@ try:
     episode_rewards = []
     episode_losses = []  
     stability_scores = []  
-
+    episode_lengths = []
     for episode in range(500):
       
         total_reward = 0
@@ -104,7 +104,13 @@ try:
             state_angle = new_state_angle
             state_velocity = new_state_velocity
 
-        
+                    
+            if abs(pitch) > 0.8:  # Robot falls if pitch > 0.5
+                print(f"Episode {episode + 1}: Robot fell after {total_steps} steps.")
+                done = True
+                break
+
+        episode_lengths.append(total_steps)
         episode_rewards.append(total_reward)
         episode_losses.append(total_loss / total_steps)  
         stability_scores.append(stable_steps / total_steps)  # Fraction of stable steps
@@ -118,8 +124,8 @@ try:
     # print("Q-table saved to q_table.npy")
 
  
-    plt.figure(figsize=(18, 6))
-    plt.subplot(3, 1, 1)
+    plt.figure(figsize=(18, 8))
+    plt.subplot(4, 1, 1)
     plt.plot(episode_rewards, label="Total Reward")
     plt.xlabel("Episode")
     plt.ylabel("Total Reward")
@@ -127,7 +133,7 @@ try:
     plt.legend()
     plt.grid()
 
-    plt.subplot(3, 1, 2)
+    plt.subplot(4, 1, 2)
     plt.plot(episode_losses, label="Average Loss", color="red")
     plt.xlabel("Episode")
     plt.ylabel("Loss")
@@ -135,11 +141,19 @@ try:
     plt.legend()
     plt.grid()
 
-    plt.subplot(3, 1, 3)
+    plt.subplot(4, 1, 3)
     plt.plot(stability_scores, label="Stability Score", color="green")
     plt.xlabel("Episode")
     plt.ylabel("Stability Score")
     plt.title("Stability Score per Episode")
+    plt.legend()
+    plt.grid()
+
+    plt.subplot(4, 1, 4)
+    plt.plot(episode_lengths, label="Episode Length", color="orange")
+    plt.xlabel("Episode")
+    plt.ylabel("Episode Length (Steps)")
+    plt.title("Episode Length per Episode")
     plt.legend()
     plt.grid()
 
